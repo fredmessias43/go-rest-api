@@ -1,10 +1,7 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -13,7 +10,7 @@ import (
 )
 
 func main() {
-	router := mux.NewRouter()
+	router := gin.Default()
 
 	db, err := gorm.Open(sqlite.Open("test.sqlite"), &gorm.Config{})
 	if err != nil {
@@ -21,19 +18,17 @@ func main() {
 	}
 	db.AutoMigrate(&models.Person{}, &models.Mail{})
 
-	person := controllers.PersonController{
-		DB: db,
-	}
-	router.HandleFunc("/people", person.Index).Methods("GET")
-	router.HandleFunc("/people/{id}", person.Show).Methods("GET")
-	router.HandleFunc("/people/{id}", person.Store).Methods("POST")
-	router.HandleFunc("/people/{id}", person.Delete).Methods("DELETE")
+	person := controllers.PersonController{DB: db}
+	router.GET("/people", person.Index)
+	router.GET("/people/:id", person.Show)
+	router.POST("/people", person.Store)
+	router.DELETE("/people/:id", person.Delete)
 
-	mail := controllers.MailController{}
-	router.HandleFunc("/mails", mail.Index).Methods("GET")
-	router.HandleFunc("/mails/{id}", mail.Show).Methods("GET")
-	router.HandleFunc("/mails/{id}", mail.Store).Methods("POST")
-	router.HandleFunc("/mails/{id}", mail.Delete).Methods("DELETE")
+	mail := controllers.MailController{DB: db}
+	router.GET("/mails", mail.Index)
+	router.GET("/mails/:id", mail.Show)
+	router.POST("/mails", mail.Store)
+	router.DELETE("/mails/:id", mail.Delete)
 
-	log.Fatal(http.ListenAndServe(":8000", router))
+	router.Run()
 }

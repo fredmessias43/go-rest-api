@@ -1,58 +1,47 @@
 package controllers
 
 import (
-	"encoding/json"
-	"net/http"
 	"strconv"
 
-	"github.com/fredmessias43/rest-api/models"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
+	"github.com/fredmessias43/rest-api/models"
 )
 
 type MailController struct {
 	DB *gorm.DB
 }
 
-var mails = []models.Mail{
-	{ID: 1, Content: "John", Subject: "Doe"},
-	{ID: 2, Content: "Koko", Subject: "Doe"},
+func (p *MailController) Index(c *gin.Context) {
+	mails := []models.Mail{}
+	p.DB.Find(&mails)
+	c.JSON(200, mails)
 }
 
-func (m *MailController) Index(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(mails)
+func (p *MailController) Show(c *gin.Context) {
+	ID, _ := strconv.Atoi(c.Param("id"))
+
+	mail := models.Mail{}
+	_ = p.DB.Find(&mail, int(ID))
+
+	c.JSON(200, mail)
 }
 
-func (m *MailController) Show(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	for _, item := range mails {
-		ID, _ := strconv.ParseInt(params["id"], 0, 32)
-		if item.ID == int(ID) {
-			json.NewEncoder(w).Encode(item)
-			return
-		}
-	}
-	json.NewEncoder(w).Encode(&models.Mail{})
-}
+func (p *MailController) Store(c *gin.Context) {
 
-func (m *MailController) Store(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
 	var mail models.Mail
-	_ = json.NewDecoder(r.Body).Decode(&mail)
-	ID, _ := strconv.ParseInt(params["id"], 0, 32)
-	mail.ID = int(ID)
-	mails = append(mails, mail)
-	json.NewEncoder(w).Encode(mails)
+
+	_ = p.DB.Create(&mail)
+
+	c.JSON(200, mail)
 }
 
-func (m *MailController) Delete(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	for index, item := range mails {
-		ID, _ := strconv.ParseInt(params["id"], 0, 32)
-		if item.ID == int(ID) {
-			mails = append(mails[:index], mails[index+1:]...)
-			break
-		}
-		json.NewEncoder(w).Encode(mails)
-	}
+func (p *MailController) Delete(c *gin.Context) {
+	ID, _ := strconv.Atoi(c.Param("id"))
+
+	mail := models.Mail{}
+	_ = p.DB.Delete(&mail, int(ID))
+
+	c.JSON(200, mail)
 }

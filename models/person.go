@@ -8,3 +8,8 @@ type Person struct {
 	Firstname string
 	Lastname  string
 }
+
+type PersonRequest struct {
+	Firstname string
+	Lastname  string
+}

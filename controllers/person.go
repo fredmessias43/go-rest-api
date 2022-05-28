@@ -1,11 +1,10 @@
 package controllers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/fredmessias43/rest-api/models"
@@ -15,35 +14,39 @@ type PersonController struct {
 	DB *gorm.DB
 }
 
-func (p *PersonController) Index(w http.ResponseWriter, r *http.Request) {
+func (p *PersonController) Index(c *gin.Context) {
 	people := []models.Person{}
 	p.DB.Find(&people)
-	println(people)
-	json.NewEncoder(w).Encode(people)
+	c.JSON(200, people)
 }
 
-func (p *PersonController) Show(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	ID, _ := strconv.ParseInt(params["id"], 0, 32)
+func (p *PersonController) Show(c *gin.Context) {
+	ID, _ := strconv.Atoi(c.Param("id"))
+
 	person := models.Person{}
-	p.DB.Find(&person, int(ID))
+	_ = p.DB.Find(&person, int(ID))
 
-	json.NewEncoder(w).Encode(person)
+	c.JSON(200, person)
 }
 
-func (p *PersonController) Store(w http.ResponseWriter, r *http.Request) {
-	person := models.Person{ID: 3, Firstname: "fred", Lastname: "messias"}
+func (p *PersonController) Store(c *gin.Context) {
+	var person models.Person
+
+	if err := c.BindJSON(&person); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
 
 	_ = p.DB.Create(&person)
 
-	json.NewEncoder(w).Encode(person)
+	c.JSON(201, person)
 }
 
-func (p *PersonController) Delete(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	ID, _ := strconv.ParseInt(params["id"], 0, 32)
-	person := models.Person{}
-	p.DB.Find(&person, int(ID))
+func (p *PersonController) Delete(c *gin.Context) {
+	ID, _ := strconv.Atoi(c.Param("id"))
 
-	json.NewEncoder(w).Encode(person)
+	person := models.Person{}
+	_ = p.DB.Delete(&person, int(ID))
+
+	c.JSON(200, person)
 }
