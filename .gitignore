@@ -1,2 +1,6 @@
 *.sqlite
 *.db
+*.log
+
+.env
+tmp
